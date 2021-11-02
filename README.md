@@ -1,0 +1,1 @@
+# gentoo_install_guide
