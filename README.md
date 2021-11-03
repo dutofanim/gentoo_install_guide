@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="https://img.shields.io/github/license/dutofanim/gentoo_install_guide?style=plastic" />
+</p>
+
+
 # Installation instructions of
 
 ```text
