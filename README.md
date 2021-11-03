@@ -172,45 +172,52 @@ mount -o noatime,compress=zstd,space_cache,discard=async,subvol=@var /dev/mapper
 mount /dev/sdX2 /mnt/gentoo/boot
 ```
 
-#### Change the current working directory to download the tarball
+## Getting the files
+
+### Change the current working directory to download the tarball
 
  ```bash
  cd /mnt/gentoo
  ```
 
-##### Get gentoo stage3
+#### Get gentoo stage3
 
 ```bash
 curl -v https://mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-openrc/stage3-amd64-openrc-20211101T001702Z.tar.xz --output /mnt/gentoo/stage3.tar.xz
 ```
 
-##### Unzip the downloaded archive
+#### Unzip the downloaded archive
 
 ```bash
 tar xpvJf stage3.tar.xz --xattrs-include='*.*' --numeric-owner
 ```
 
-##### Delete unnecessary files
+#### Delete unnecessary files
 
 ```bash
 rm stage3.tar.xz
 ```
 
-Configure compile options. Open **/mnt/gentoo/etc/portage/make.conf** with nano and setup required flags.
+## Adjusting initial settings
+
+### Configure compile options
+
+Open **/mnt/gentoo/etc/portage/make.conf** with nano and setup required flags.
 
 ```bash
 nano -w /mnt/gentoo/etc/portage/make.conf 
 ```
 
-#### You can use this file as an example:
+#### You can use this file as an example
 
 ```bash
+# my make.conf
 ######## Var definitions #######################################################################################
 USE_FLAGS="python icu mmx sse sse2 pulseaudio alsa -bindist vaapi vulkan xvmc dbus"
 CPU_FLAGS="aes avx avx2 f16c fma3 mmx mmxext pclmul popcnt rdrand sse sse2 sse3 sse4_1 sse4_2 ssse3"
 IN_DEVICES="libinput keyboard mouse synaptics evdev"
 VIDEO_CARDS="nvidia intel vesa" <--- Choose your video card
-EMERGE_OPTS="--ask --autounmask-write=y --with-bdeps=y --quiet-build=y --keep-going=yes"
+EMERGE_OPTS="--ask --autounmask-write=y --with-bdeps=y --quiet-build=y --keep-going=y --jobs 4 --load-average 10.8"
 LOCAL="pt-BR en-US"
 LICENSES="* @FREE"
 BR_MIRRORS="https://gentoo.c3sl.ufpr.br/ http://gentoo.c3sl.ufpr.br/ rsync://gentoo.c3sl.ufpr.br/gentoo/"
@@ -226,7 +233,7 @@ CPU_FLAGS_X86="$(CPU_FLAGS)"
 ################################################################################################################
 
 ################################################################################################################
-MAKEOPTS="-j13" <--- this value is the output of the nproc + 1
+MAKEOPTS="-j13 -l12"
 EMERGE_DEFAULT_OPTS="${EMERGE_OPTS}"
 PORTAGE_NICENESS=19
 GRUB_PLATFORMS="efi-64"
@@ -258,9 +265,11 @@ GENTOO_MIRRORS="${BR_MIRRORS}"
 ################################################################################################################
 ```
 
-#### Preparing to chroot
+## Preparing to chroot
 
-Configuring the repository can be done in a few simple steps. First, if it does not exist, create the **repos.conf** directory:
+### Configuring the repository
+
+This can be done in a few simple steps. First, if it does not exist, create the **repos.conf** directory:
 
 ```bash
 mkdir --parents /mnt/gentoo/etc/portage/repos.conf
@@ -272,11 +281,15 @@ Next, copy the Gentoo repository configuration file provided by Portage to the (
 cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
 ```
 
+## DNS
+
 Copy DNS info:
 
 ```bash
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
 ```
+
+## Mounting system files
 
 Mounting the necessary filesystems:
 
@@ -290,7 +303,9 @@ mount --bind /run /mnt/gentoo/run
 mount --make-slave /mnt/gentoo/run
 ```
 
-**Warning**
+### Warning
+
+
 When using **non-Gentoo installation media**, this might not be sufficient. Some distributions make **/dev/shm** a symbolic link to **/run/shm/** which, after the **chroot**, becomes invalid. Making **/dev/shm/ a proper tmpfs** mount up front can fix this:
 
 ```bash
@@ -304,15 +319,17 @@ Also ensure that **mode 1777** is set:
 chmod 1777 /dev/shm
 ```
 
+### Gensftab script
+
 If you are using the arch-iso to installation, you can use the **genfstab** script to generate the fstab file automatically.
 
 ```bash
 genfstab -U /mnt/gentoo >> /mnt/gentoo/etc/fstab
 ```
 
-#### Entering the new environment
+## Entering the new environment
 
-Chroot
+### Chroot
 
 ```bash
 chroot /mnt/gentoo /bin/bash
@@ -320,13 +337,15 @@ source /etc/profile
 export PS1="(chroot) $PS1"
 ```
 
-Install Portage files:
+### Portage sync
+
+#### Install files
 
 ```bash
-emerge-webrsync
-
-emerge --sync
+emerge-webrsync && emerge --sync
 ```
+
+#### Profile selection
 
 Choose and install correct profile (8 is a desktop with plasma):
 
@@ -362,7 +381,7 @@ Update env:
 env-update && source /etc/profile && export PS1="(chroot) ${PS1}"
 ```
 
-##### Configure FSTAB
+## Configure FSTAB
 
  For consistent setup of the required partition, use the UUID identifyer.
 
@@ -379,7 +398,9 @@ blkid
 /dev/mapper/vg0-home: UUID="5d6ff087-50ce-400f-91c4-e3378be23c00" TYPE="ext4"
 ```
 
-Edit /etc/fstab and setup correct filesystem:
+### Edit /etc/fstab
+
+Example of fstab
 
 ```bash
 # NOTE: If your BOOT partition is ReiserFS, add the notail option to opts.
@@ -409,7 +430,9 @@ UUID=1ea2dfd2-a6d7-43fe-b8af-a5364bf0b486       /var            btrfs           
 tracefs                                 /sys/kernel/tracing     tracefs         rw,nosuid,nodev,noexec                                                                          0 0
 ```
 
-#### Kernel configuration and compilation
+## Kernel
+
+### Configuration and compilation
 
 Install kernel, genkernel and cryptsetup packages:
 
@@ -437,7 +460,7 @@ ls -l /usr/src/linux
 lrwxrwxrwx 1 root root 19 Nov  1 16:58 /usr/src/linux -> linux-5.15.0-gentoo
 ```
 
-#### Using genkernel
+### Using genkernel
 
 Install genkernel:
 
@@ -455,9 +478,11 @@ Build genkernel
 genkernel --luks --lvm --no-zfs --microcode all
 ```
 
-#### Networking information
+## Network config
 
-Host and domain information:
+### Networking information
+
+#### Host and domain information:
 
 ```bash
 nano -w /etc/conf.d/hostname
@@ -472,21 +497,16 @@ config_enp2s0="dhcp"
 dns_domain_lo="homenetwork"
 ```
 
-#### Configuring the network
+### Automatically start networking at boot
 
 ```bash
 emerge --ask --noreplace net-misc/netifrc
-```
-
-#### Automatically start networking at boot
-
-```bash
 cd /etc/init.d
 ln -s net.lo net.enp2s0
 rc-update add net.enp2s0 default
 ```
 
-Configure hosts
+#### Configure hosts
 
 ```bash
 nano -w /etc/hosts
@@ -494,16 +514,17 @@ nano -w /etc/hosts
 127.0.0.1     gentoo.homenetwork gentoo localhost
 ```
 
-Get PMCIA works
+####Get PMCIA works
 
 ```bash
 emerge --ask sys-apps/pcmciautils
 ```
 
-#### System information
+## System information
 
-Root password
-Set the root password using the passwd command.
+### Change root password
+
+Set the root password
 
 ```bash
 passwd
@@ -511,12 +532,15 @@ passwd
 
 The root Linux account is an all-powerful account, so pick a strong password. Later an additional regular user account will be created for daily operations.
 
-Init and boot configuration
+### Init and boot configuration
+
 Gentoo (at least when using OpenRC) uses **/etc/rc.conf** to configure the services, startup, and shutdown of a system. Open up /etc/rc.conf and enjoy all the comments in the file. Review the settings and change where needed.
 
 ```bash
 root #nano -w /etc/rc.conf
 ```
+
+### Keyboard layout
 
 Next, open **/etc/conf.d/keymaps** to handle keyboard configuration. Edit it to configure and select the right keyboard.
 
@@ -526,31 +550,37 @@ nano -w /etc/conf.d/keymaps
 
 Take special care with the keymap variable. If the wrong keymap is selected, then weird results will come up when typing on the keyboard.
 
-#### System logger
+## System logger
+
+### Using sysklogd and cronie
 
 ```bash
 emerge --ask app-admin/sysklogd
 emerge --ask sys-process/cronie
 ```
 
+#### Adding to default runlevel
+
 ```bash
 rc-update add sysklogd default
 rc-update add cronie default
 ```
 
-Optional: File indexing
+#### Optional: File indexing
 
 ```bash
 emerge --ask sys-apps/mlocate
 ```
 
-Optional: Remote access
+#### Optional: Remote access
 
 ```bash
 rc-update add sshd default
 ```
 
-#### Filesystem tools
+## Filesystem tools
+
+Add the ones you want to your system or install them all if you want
 
 ```bash
 emerge --ask sys-fs/e2fsprogs
@@ -562,28 +592,29 @@ emerge --ask sys-fs/btrfs-progs
 emerge --ask sys-fs/zfs
 ```
 
-#### Networking tools
+## Networking tools
 
-Install ethernet tools
+### Install ethernet tools
 
 ```bash
 emerge --ask net-misc/dhcpcd
 ```
 
-Install wireless networking tools
+### Install wireless networking tools
 
 ```bash
 emerge --ask net-wireless/wpa_supplicant
 ```
 
-If you get an error when trying to install wpa_supplicant, try this command below:
+If you get an error of circular dependencies when trying to install wpa_supplicant, try this command below:
 
 ```bash
 USE="-X -cairo -glib -graphite -harfbuzz -icu -introspection -png -truetype" emerge media-libs/freetype media-libs/harfbuzz
 ```
 
-#### GRUB2
+## GRUB2
 
+### Warning
 Don't forget to change "REPLACE ME WITH sdX3 UUID"  to the actual value.
 
 ```bash
@@ -596,7 +627,7 @@ echo "sys-boot/grub:2 device-mapper" >> /etc/portage/package.use/sys-boot
 emerge --ask --verbose sys-boot/grub:2
 ```
 
-Mount boot partition:
+### Mount boot partition
 
 ```bash
 mount /boot
@@ -604,19 +635,19 @@ mount /boot
 
 A note for UEFI users: running the above command will output the enabled GRUB_PLATFORMS values before emerging. When using UEFI capable systems, users will need to ensure GRUB_PLATFORMS="efi-64" is enabled (as it is the case by default). If that is not the case for the setup, GRUB_PLATFORMS="efi-64" will need to be added to the /etc/portage/make.conf file before emerging GRUB2 so that the package will be built with EFI functionality:
 
-#### Install GRUB2
+### Install GRUB2
 
 ```bash
 grub-install --target=x86_64-efi --efi-directory=/boot
 ```
 
-#### Start LVM services
+### Start LVM services
 
 ```bash
 rc-update add lvm default
 ```
 
-#### Configure GRUB2
+### Configure GRUB2
 
 ```bash
 grub-mkconfig -o /boot/grub/grub.cfg
