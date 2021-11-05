@@ -480,7 +480,7 @@ emerge sys-fs/cryptsetup
 Build genkernel
 
 ```bash
-genkernel --luks --lvm --no-zfs --microcode all
+genkernel --btrfs --luks --lvm --no-zfs --microcode all
 ```
 
 ## Network config
