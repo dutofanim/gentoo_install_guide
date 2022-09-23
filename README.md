@@ -43,7 +43,7 @@ To create **GRUB BIOS**, issue the following command (changing X with your needs
 parted -a optimal /dev/sdX
 ```
 
-Set the default units to mebibytes:
+Set the default units to megabytes:
 
 ```bash
 unit mib
