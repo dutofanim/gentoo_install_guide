@@ -165,10 +165,10 @@ cd && umount /mnt
 
 ```bash
 mkdir -p /mnt/gentoo
-mount -o noatime,compress=zstd,space_cache,discard=async,subvol=@ /dev/mapper/vg0-root /mnt/gentoo
+mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@ /dev/mapper/vg0-root /mnt/gentoo
 mkdir -p /mnt/gentoo/{boot,home,var}
-mount -o noatime,compress=zstd,space_cache,discard=async,subvol=@home /dev/mapper/vg0-root /mnt/gentoo/home
-mount -o noatime,compress=zstd,space_cache,discard=async,subvol=@var /dev/mapper/vg0-root /mnt/gentoo/var
+mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@home /dev/mapper/vg0-root /mnt/gentoo/home
+mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@var /dev/mapper/vg0-root /mnt/gentoo/var
 ```
 
 #### Mounting the boot partition
