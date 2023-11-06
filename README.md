@@ -144,10 +144,11 @@ Create logical volume for /root fs:
 lvcreate -l 100%FREE -n root vg0
 ```
 
-#### Format partition with BTRFS type
+#### Format partition with BTRFS type and create gentoo dir
 
 ```bash
 mkfs.btrfs /dev/mapper/vg0-root
+mkdir --parents /mnt/gentoo
 ```
 
 #### Mount partition and create subvolumes
