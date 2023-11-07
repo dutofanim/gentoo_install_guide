@@ -166,7 +166,7 @@ cd && umount /mnt/gentoo
 
 ```bash
 mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@ /dev/mapper/vg0-root /mnt/gentoo
-mkdir -p /mnt/gentoo/{boot,home,var}
+mkdir -p /mnt/gentoo/{boot/efi,home,var}
 mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@home /dev/mapper/vg0-root /mnt/gentoo/home
 mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@var /dev/mapper/vg0-root /mnt/gentoo/var
 ```
@@ -174,7 +174,7 @@ mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@var /dev/map
 #### Mounting the boot partition
 
 ```bash
-mount /dev/sdX2 /mnt/gentoo/boot
+mount /dev/sdX2 /mnt/gentoo/boot/efi
 ```
 
 ## Getting the files
