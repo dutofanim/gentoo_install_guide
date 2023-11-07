@@ -154,18 +154,17 @@ mkdir --parents /mnt/gentoo
 #### Mount partition and create subvolumes
 
 ```bash
-mount /dev/mapper/vg0-root /mnt
-cd /mnt
+mount /dev/mapper/vg0-root /mnt/gentoo
+cd /mnt/gentoo
 btrfs subvolume create @
 btrfs subvolume create @home
 btrfs subvolume create @var
-cd && umount /mnt
+cd && umount /mnt/gentoo
 ```
 
 #### Create the directories to mount the partitions
 
 ```bash
-mkdir -p /mnt/gentoo
 mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@ /dev/mapper/vg0-root /mnt/gentoo
 mkdir -p /mnt/gentoo/{boot,home,var}
 mount -o noatime,compress=zstd,space_cache=v2,discard=async,subvol=@home /dev/mapper/vg0-root /mnt/gentoo/home
@@ -189,7 +188,7 @@ mount /dev/sdX2 /mnt/gentoo/boot
 #### Get gentoo stage3
 
 ```bash
-curl -v https://mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-openrc/stage3-amd64-openrc-20211101T001702Z.tar.xz --output /mnt/gentoo/stage3.tar.xz
+curl -v https://distfiles.gentoo.org/releases/amd64/autobuilds/20231105T170200Z/stage3-amd64-desktop-openrc-20231105T170200Z.tar.xz --output /mnt/gentoo/stage3.tar.xz
 ```
 
 #### Unzip the downloaded archive
@@ -316,7 +315,7 @@ When using **non-Gentoo installation media**, this might not be sufficient. Some
 
 ```bash
 test -L /dev/shm && rm /dev/shm && mkdir /dev/shm
-mount -t tmpfs -o nosuid,nodev,noexec shm /dev/shm
+mount --types tmpfs --options nosuid,nodev,noexec shm /dev/shm
 ```
 
 Also ensure that **mode 1777** is set:
@@ -360,6 +359,12 @@ eselect profile list
 eselect profile set 8
 ```
 
+After change the profile, we have to update the @world set
+
+```bash
+emerge --ask --verbose --update --deep --newuse @world
+```
+
 Setup correct timezone:
 
 ```bash
@@ -371,6 +376,17 @@ Configure locales
 
 ```bash
 nano -w /etc/locale.gen
+```
+
+Add the chosen language
+
+```text
+#//  For english system language
+en_US ISO-8859-1
+en_US.UTF-8 UTF-8
+```
+
+```bash
 locale-gen
 ```
 
